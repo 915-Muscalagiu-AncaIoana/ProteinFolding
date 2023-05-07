@@ -7,7 +7,7 @@ from torch import nn
 sequence_length = 25
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
+# Here x is 2d and c and h are 3d, please define them in 2d
 class RNN_LSTM_onlyLastHidden(nn.Module):
     """
     LSTM version that just uses the information from the last hidden state
@@ -25,7 +25,7 @@ class RNN_LSTM_onlyLastHidden(nn.Module):
         # batch_first Default: False
         # dropout Default: 0
         # bidirectional Default: False
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.lstm = nn.LSTM(input_size+1, hidden_size, num_layers, batch_first=True)
         # remove the sequence_length
         self.fc = nn.Linear(hidden_size, num_classes)
 
@@ -80,6 +80,7 @@ class BRNN(nn.Module):
         self.lstm = nn.LSTM(
             input_size, hidden_size, num_layers, batch_first=True, bidirectional=True
         )
+        print(self.lstm)
         # hidden_size needs to expand both directions, *2
         self.fc = nn.Linear(hidden_size * 2, num_classes)
 

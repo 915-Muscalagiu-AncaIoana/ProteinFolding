@@ -78,3 +78,5 @@ def parametrized_circuit(num_qubits=4, reuploading=False, reps=2, insert_barrier
         if meas: qc.measure(qr, cr)
 
     return qc
+
+

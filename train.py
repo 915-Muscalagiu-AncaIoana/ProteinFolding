@@ -19,7 +19,7 @@ from q_learning_utils import batch_size, gamma, train_times, ReplayBuffer, devic
 
 # import the hpsandbox util functions
 sys.path.append('../code')
-from utils.plotting_utils import (
+from utilities.plotting_utils import (
     plot_print_rewards_stats,
 )
 from annealling import (
@@ -140,7 +140,7 @@ def one_hot_state(state_arr, seq_one_hot, action_depth):
 
 # env = gym.make(id="gym_lattice:Lattice2D-miranda2020Jul-v1", seq=seq)
 env = gym.make(
-    id="protein_folding_environment:Gym_Lattice",
+    id="protein_folding_environment:ProteinFoldingSquareEnv",
     seq=seq,
 )
 
@@ -172,6 +172,7 @@ print(f"inputs_size={input_size} hidden_size={hidden_size} num_layers={num_layer
 
 
 q = BRNN(input_size, hidden_size, num_layers, n_actions).to(device)
+print(q)
 q_target = BRNN(input_size, hidden_size, num_layers, n_actions).to(device)
 q_target.load_state_dict(q.state_dict())
 optimizer = optim.Adam(q.parameters(), lr=learning_rate)

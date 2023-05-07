@@ -19,6 +19,8 @@ from qiskit_machine_learning.connectors import TorchConnector
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from utilities.plotting_utils import plot_moving_avg
+
 parser = argparse.ArgumentParser(
     usage="%(prog)s [seq] [seed] [algo] [num_episodes]...",
     description="DQN learning for Lattice 2D HP"
@@ -46,7 +48,10 @@ algo = args.algo  # path to save the experiments
 num_episodes = args.num_episodes  # number of episodes
 max_steps_per_episode = len(seq) - 2
 num_qubits = len(seq) - 2
-
+rewards_all_episodes = np.zeros(
+    (num_episodes,),
+    # dtype=np.int32
+)
 # Generate the Parametrized Quantum Circuit (note the flags reuploading and reps)
 qc = parametrized_circuit(num_qubits=num_qubits,
                           reuploading=True,
@@ -83,7 +88,7 @@ model = torch.nn.Sequential(encoding,
 model.state_dict()
 
 env = gym.make(
-    id="protein_folding_environment:ProteinFolding2DEnv",
+    id="protein_folding_environment:ProteinFoldingLRF2DEnv",
     seq=seq,
 )
 input_shape = env.observation_space.shape  # == env.observation_space.shape
@@ -179,40 +184,37 @@ for episode in range(num_episodes):
         obs, reward, done, info = play_one_step(env, obs, epsilon)
         if done:
             break
-    rewards.append(reward)
+    rewards.append((episode,reward))
+    rewards_all_episodes[episode] = reward
     # Saving best agent
     if reward > best_score:
         # torch.save(model.state_dict(), './new_model_best_weights.pth') # Save best weights
         best_score = reward
+        best_episode = episode
         env.render()
-    print("\rEpisode: {}, Steps : {}, eps: {:.3f}, Score: {}".format(episode, step + 1, epsilon,best_score), end="")
+    print("\rEpisode: {}, Steps : {}, eps: {:.3f}, Score: {}".format(episode, step + 1, epsilon,reward), end="")
 
     # Start training only after some exploration experiences
     if episode > 20:
         sequential_training_step(batch_size)
 
 model.state_dict()
-plt.figure(figsize=(8, 4))
-plt.plot(rewards)
-plt.xlabel("Episode", fontsize=14)
-plt.ylabel("Sum of rewards", fontsize=14)
-plt.show()
+
 
 sns.set_theme()
 
-
+plot_moving_avg(rewards_all_episodes, mode="show", save_path="v")
 cmap = plt.get_cmap('tab20c')
 
 fig = plt.figure(figsize=(8, 5))
-plt.axhline([200], ls='dashed', c=cmap(9))
-plt.text(-50, 190, s='Max reward', c=cmap(8))
-
-plt.text(-50, 100, s='Exploration\nphase', c=cmap(12))
-plt.text(1100, 100, s='Exploitation\nphase', c=cmap(12))
-
-
+plt.axhline([0], ls='dashed', c=cmap(9))
+plt.xlim(0,num_episodes)
+plt.ylim(-1, best_score+1)
+plt.text(x = best_episode , y = best_score, s='Max reward', c=cmap(8))
+plt.text(x = num_episodes/4 , y = best_score/2, s='Exploration Phase', c=cmap(8))
+plt.text(x = num_episodes*3/4  , y = best_score/2, s='Exploitation Phase', c=cmap(8))
+plt.plot(rewards)
 plt.xlabel("Episodes")
 plt.ylabel("Final reward")
 
-plt.tight_layout()
 plt.show()

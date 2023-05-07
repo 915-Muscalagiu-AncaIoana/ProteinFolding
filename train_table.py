@@ -9,13 +9,11 @@ import torch.optim as optim
 from prettytable import PrettyTable
 import os  # for creating directories
 import sys
-
-from protein_folding_environment.movement_utils import sample_action_from_q_table
-from q_learning_utils import batch_size, gamma, train_times, ReplayBuffer, device, train
+from utilities.training_utils import sample_action_from_q_table
 
 # import the hpsandbox util functions
 sys.path.append('../code')
-from utils.plotting_utils import (
+from utilities.plotting_utils import (
     plot_print_rewards_stats,
 )
 from annealling import (
@@ -68,7 +66,7 @@ exploration_decay_rate = 5  # for exponential decay
 start_decay = 0  # for exponential and linear
 
 env = gym.make(
-    id="protein_folding_environment:ProteinFolding2DEnv",
+    id="protein_folding_environment:ProteinFolding3DEnv",
     seq=seq,
 )
 
@@ -188,13 +186,6 @@ for n_episode in range(num_episodes):
 print('Complete')
 
 # ***** plot the stats and save in save_path *****
-
-plot_print_rewards_stats(
-    rewards_all_episodes,
-    1,
-    args,
-    mode="show",
-)
 
 env.close()
 

@@ -5,15 +5,15 @@ from gym import (spaces, logger)
 import numpy as np
 
 from protein_folding_environment.base_environment_2d import ProteinFolding2DEnv
-from protein_folding_environment.movement_utils import move_to_new_state_2d, move_to_new_state_triangular
+from protein_folding_environment.movement_utils import move_to_new_state_2d, move_to_new_state_lrf
 
 
 
-class ProteinFoldingTriangularEnv(ProteinFolding2DEnv):
+class ProteinFoldingLRF2DEnv(ProteinFolding2DEnv):
     def __init__(self, seq):
         super().__init__(seq)
-        self.action_space = spaces.Discrete(start=1, n=6)
-        self.observation_space = spaces.Box(low=0, high=5,
+        self.action_space = spaces.Discrete(start=1, n=3)
+        self.observation_space = spaces.Box(low=0, high=3,
                                             shape=(len(self.seq) - 2,),
                                             dtype=int)
 
@@ -22,12 +22,8 @@ class ProteinFoldingTriangularEnv(ProteinFolding2DEnv):
             raise ValueError("%r (%s) invalid" % (action, type(action)))
 
         previous = list(self.state.keys())[-1]
-        previous2 = list(self.state.keys())[-2]
-        next_state = move_to_new_state_triangular(
-            previous,
-            previous2,
-            action
-        )
+        new_move_direction, next_state = move_to_new_state_lrf(self.move_direction,previous,action)
+        self.move_direction = new_move_direction
         idx = len(self.state)
         if next_state is None or next_state in self.state:
             return (None, None, False, False, {})
@@ -40,6 +36,11 @@ class ProteinFoldingTriangularEnv(ProteinFolding2DEnv):
 
         return self.get_observation_info(next_state)
 
+    def reset(self):
+        obs = super().reset()
+        self.move_direction = (0, 1)
+        return obs
+
     def _get_adjacent_coords(self, coords):
         x, y = coords
         adjacent_coords = {
@@ -47,8 +48,5 @@ class ProteinFoldingTriangularEnv(ProteinFolding2DEnv):
             1: (x, y - 1),
             2: (x, y + 1),
             3: (x + 1, y),
-            4: (x + 1, y + 1),
-            5: (x - 1, y - 1),
         }
         return adjacent_coords
-
